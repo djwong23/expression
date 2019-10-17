@@ -182,15 +182,25 @@ public class Expression {
         while (expr.contains("*")) {
             int index = expr.indexOf("*");
             for (int i = index - 1; i >= 0; i--) {
-                if (delims.contains(expr.charAt(i) + ""))
+                if (delims.contains(expr.charAt(i) + "")) {
+                    if (expr.charAt(i) == '-') {
+                        if (i == 0) {
+                            number1 = expr.charAt(i) + number1;
+                            break;
+                        } else if (Character.isDigit(expr.charAt(i - 1)))
+                            break;
+                    }
                     break;
-                else {
+                } else {
                     number1 = expr.charAt(i) + number1;
                 }
             }
             for (int i = index + 1; i < expr.length(); i++) {
                 if (delims.contains(expr.charAt(i) + "")) {
-                    break;
+                    if (expr.charAt(i) == '-' && i == index + 1) {
+                        number2 = number2 + expr.charAt(i);
+                    } else
+                        break;
                 } else {
                     number2 = number2 + expr.charAt(i);
                 }
@@ -206,15 +216,25 @@ public class Expression {
         while (expr.contains("/")) {
             int index = expr.indexOf("/");
             for (int i = index - 1; i >= 0; i--) {
-                if (delims.contains(expr.charAt(i) + ""))
+                if (delims.contains(expr.charAt(i) + "")) {
+                    if (expr.charAt(i) == '-') {
+                        if (i == 0) {
+                            number1 = expr.charAt(i) + number1;
+                            break;
+                        } else if (Character.isDigit(expr.charAt(i - 1)))
+                            break;
+                    }
                     break;
-                else {
+                } else {
                     number1 = expr.charAt(i) + number1;
                 }
             }
             for (int i = index + 1; i < expr.length(); i++) {
                 if (delims.contains(expr.charAt(i) + "")) {
-                    break;
+                    if (expr.charAt(i) == '-' && i == index + 1) {
+                        number2 = number2 + expr.charAt(i);
+                    } else
+                        break;
                 } else {
                     number2 = number2 + expr.charAt(i);
                 }
@@ -231,6 +251,13 @@ public class Expression {
             int index = expr.indexOf("+");
             for (int i = index - 1; i >= 0; i--) {
                 if (delims.contains(expr.charAt(i) + "")) {
+                    if (expr.charAt(i) == '-') {
+                        if (i == 0) {
+                            number1 = expr.charAt(i) + number1;
+                            break;
+                        } else if (Character.isDigit(expr.charAt(i - 1)))
+                            break;
+                    }
                     break;
                 } else {
                     number1 = expr.charAt(i) + number1;
@@ -238,7 +265,10 @@ public class Expression {
             }
             for (int i = index + 1; i < expr.length(); i++) {
                 if (delims.contains(expr.charAt(i) + "")) {
-                    break;
+                    if (expr.charAt(i) == '-' && i == index + 1) {
+                        number2 = number2 + expr.charAt(i);
+                    } else
+                        break;
                 } else {
                     number2 = number2 + expr.charAt(i);
                 }
@@ -254,9 +284,7 @@ public class Expression {
         while (expr.contains("-")) {
             int index = expr.indexOf("-");
             boolean shouldBreak = true;
-            boolean startNeg = false;
             if (index == 0) {
-                startNeg = true;
                 for (int i = index + 1; i < expr.length(); i++) {
                     if (delims.contains(expr.charAt(i) + "")) {
                         shouldBreak = false;
@@ -271,9 +299,16 @@ public class Expression {
                     break;
             }
             if (index == 0)
-                index = 1+ expr.substring(1).indexOf('-');
+                index = 1 + expr.substring(1).indexOf('-');
             for (int i = index - 1; i >= 0; i--) {
                 if (delims.contains(expr.charAt(i) + "")) {
+                    if (expr.charAt(i) == '-') {
+                        if (i == 0) {
+                            number1 = expr.charAt(i) + number1;
+                            break;
+                        } else if (Character.isDigit(expr.charAt(i - 1)))
+                            break;
+                    }
                     break;
                 } else {
                     number1 = expr.charAt(i) + number1;
@@ -281,14 +316,16 @@ public class Expression {
             }
             for (int i = index + 1; i < expr.length(); i++) {
                 if (delims.contains(expr.charAt(i) + "")) {
-                    break;
+                    if (expr.charAt(i) == '-' && i == index + 1) {
+                        number2 = number2 + expr.charAt(i);
+                    } else
+                        break;
                 } else {
                     number2 = number2 + expr.charAt(i);
                 }
             }
             String eq = number1 + "-" + number2;
-            if (startNeg)
-                eq = "-" + eq;
+
             expr = expr.replace(eq, (Float.parseFloat(number1) - Float.parseFloat(number2)) + "");
             number1 = number2 = "";
         }
