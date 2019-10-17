@@ -52,7 +52,6 @@ public class Expression {
                     build = "";
                 }
             }
-
         }
         boolean isRepeat = false;
         for (Variable v : vars) {
@@ -65,7 +64,9 @@ public class Expression {
             vars.add(new Variable(build));
         for (int i = vars.size() - 1; i >= 0; i--) {
             try {
-                if (Integer.parseInt(vars.get(i).name) > -999999)
+                if (vars.get(i).name.length() == 0)
+                    vars.remove(i);
+                else if (Integer.parseInt(vars.get(i).name) > -999999)
                     vars.remove(i);
             } catch (NumberFormatException e) {
                 continue;
@@ -143,15 +144,180 @@ public class Expression {
      * @return Result of evaluation
      */
     public static float evaluate(String expr, ArrayList<Variable> vars, ArrayList<Array> arrays) {
-        /** COMPLETE THIS METHOD **/
+        float result = 0;
+        expr = replaceVariables(expr, vars, arrays);
+        expr = removeSpaces(expr);
+        String number1 = "";
+        String number2 = "";
+        while (expr.contains("(")) {
+            String inParenth = expr.substring(expr.indexOf('(') + 1, expr.lastIndexOf(')'));
+            float parenth = evaluate(inParenth, vars, arrays);
+            expr = expr.substring(0, expr.indexOf('(')) + parenth + expr.substring(expr.lastIndexOf(')') + 1);
+            System.out.println(expr);
+        }
+        while (expr.contains("[")) {
+            String inArray = expr.substring(expr.indexOf('[') + 1, expr.lastIndexOf(']'));
+            float arr = evaluate(inArray, vars, arrays);
+            System.out.println(arr);
+            expr = expr.substring(0, expr.indexOf('[') + 1) + arr + expr.substring(expr.lastIndexOf(']'));
+            String build = "";
+            for (int i = expr.indexOf('[') - 1; i >= 0; i--) {
+                if (delims.contains(expr.charAt(i) + ""))
+                    break;
+                else
+                    build = expr.charAt(i) + build;
+            }
+            String[] removeArr = expr.split(build + "[" + arr + "]", 2);
+            float val = 0;
+            for (Array a : arrays) {
+                if (a.name.equals(build))
+                    val = a.values[(int) (arr)];
+            }
+            expr = expr.replace(build + "[" + arr + "]", val + "");
+
+            System.out.println(expr);
+
+
+        }
+        while (expr.contains("*")) {
+            int index = expr.indexOf("*");
+            for (int i = index - 1; i >= 0; i--) {
+                if (delims.contains(expr.charAt(i) + ""))
+                    break;
+                else {
+                    number1 = expr.charAt(i) + number1;
+                }
+            }
+            for (int i = index + 1; i < expr.length(); i++) {
+                if (delims.contains(expr.charAt(i) + "")) {
+                    break;
+                } else {
+                    number2 = number2 + expr.charAt(i);
+                }
+            }
+            String eq = number1 + "\\*" + number2;
+            String[] remove = expr.split(eq, 2);
+            if (remove.length == 2)
+                expr = remove[0] + (Float.parseFloat(number1) * Float.parseFloat(number2)) + remove[1];
+            else
+                expr = remove[0];
+            number1 = number2 = "";
+        }
+        while (expr.contains("/")) {
+            int index = expr.indexOf("/");
+            for (int i = index - 1; i >= 0; i--) {
+                if (delims.contains(expr.charAt(i) + ""))
+                    break;
+                else {
+                    number1 = expr.charAt(i) + number1;
+                }
+            }
+            for (int i = index + 1; i < expr.length(); i++) {
+                if (delims.contains(expr.charAt(i) + "")) {
+                    break;
+                } else {
+                    number2 = number2 + expr.charAt(i);
+                }
+            }
+            String eq = number1 + "\\/" + number2;
+            String[] remove = expr.split(eq, 2);
+            if (remove.length == 2)
+                expr = remove[0] + (Float.parseFloat(number1) / Float.parseFloat(number2)) + remove[1];
+            else
+                expr = remove[0];
+            number1 = number2 = "";
+        }
+        while (expr.contains("+")) {
+            int index = expr.indexOf("+");
+            for (int i = index - 1; i >= 0; i--) {
+                if (delims.contains(expr.charAt(i) + "")) {
+                    break;
+                } else {
+                    number1 = expr.charAt(i) + number1;
+                }
+            }
+            for (int i = index + 1; i < expr.length(); i++) {
+                if (delims.contains(expr.charAt(i) + "")) {
+                    break;
+                } else {
+                    number2 = number2 + expr.charAt(i);
+                }
+            }
+            String eq = number1 + "\\+" + number2;
+            String[] remove = expr.split(eq, 2);
+            if (remove.length == 2)
+                expr = remove[0] + (Float.parseFloat(number1) + Float.parseFloat(number2)) + remove[1];
+            else
+                expr = remove[0];
+            number1 = number2 = "";
+        }
+        while (expr.contains("-")) {
+            int index = expr.indexOf("-");
+            boolean shouldBreak = true;
+            boolean startNeg = false;
+            if (index == 0) {
+                startNeg = true;
+                for (int i = index + 1; i < expr.length(); i++) {
+                    if (delims.contains(expr.charAt(i) + "")) {
+                        shouldBreak = false;
+                        break;
+                    }
+                }
+                if (shouldBreak)
+                    break;
+            }
+            if (index > 0) {
+                if (!Character.isDigit(expr.charAt(index - 1)))
+                    break;
+            }
+            if (index == 0)
+                index = 1+ expr.substring(1).indexOf('-');
+            for (int i = index - 1; i >= 0; i--) {
+                if (delims.contains(expr.charAt(i) + "")) {
+                    break;
+                } else {
+                    number1 = expr.charAt(i) + number1;
+                }
+            }
+            for (int i = index + 1; i < expr.length(); i++) {
+                if (delims.contains(expr.charAt(i) + "")) {
+                    break;
+                } else {
+                    number2 = number2 + expr.charAt(i);
+                }
+            }
+            String eq = number1 + "-" + number2;
+            if (startNeg)
+                eq = "-" + eq;
+            expr = expr.replace(eq, (Float.parseFloat(number1) - Float.parseFloat(number2)) + "");
+            number1 = number2 = "";
+        }
+        System.out.println(expr);
+        result = Float.parseFloat(expr);
+        return result;
+    }
+
+    /**
+     * Turns variables to numbers
+     *
+     * @param expr
+     * @param vars
+     * @param arrays
+     * @return expression with variables replaced with numbers
+     */
+    private static String replaceVariables(String expr, ArrayList<Variable> vars, ArrayList<Array> arrays) {
         int i = 0;
         ArrayList<String> strings = new ArrayList<>();
         while (i < vars.size()) {
             String var = vars.get(i).name;
-
             if (expr.contains(var)) {
                 int varIndex = expr.indexOf(var);
                 String nextChar = "";
+                String prevChar = "";
+                if (expr.length() == 1) {
+                    expr = "" + vars.get(i).value;
+                    continue;
+                }
                 if (varIndex + var.length() != expr.length()) {
                     nextChar = expr.substring(varIndex + var.length(), varIndex + var.length() + 1);
                     if (delims.contains(nextChar) && !nextChar.equals("[")) {
@@ -161,6 +327,18 @@ public class Expression {
                         strings.add(expr.substring(0, varIndex + 1));
                         expr = expr.substring(varIndex + 1);
                     }
+                } else if (varIndex + var.length() == expr.length()) {
+                    prevChar = expr.substring(varIndex - 1, varIndex);
+                    if (delims.contains(prevChar)) {
+                        String[] spl = expr.split(var, 2);
+                        expr = spl[0] + vars.get(i).value + spl[1];
+                    } else {
+                        i += 1;
+                        String fix = "";
+                        for (String s : strings)
+                            fix += s;
+                        expr = fix + expr;
+                    }
                 } else {
                     i += 1;
                     String fix = "";
@@ -168,8 +346,6 @@ public class Expression {
                         fix += s;
                     expr = fix + expr;
                 }
-
-
             } else {
                 i += 1;
                 String fix = "";
@@ -179,8 +355,17 @@ public class Expression {
                 strings = new ArrayList<>();
             }
         }
-        System.out.println(expr);
-        return 0;
+        return expr;
     }
 
+    private static String removeSpaces(String expr) {
+        char character = 0;
+        for (int i = expr.length() - 1; i >= 0; i--) {
+            character = expr.charAt(i);
+            if (character == ' ') {
+                expr = expr.substring(0, i) + expr.substring(i + 1);
+            }
+        }
+        return expr;
+    }
 }
