@@ -147,19 +147,46 @@ public class Expression {
         float result = 0;
         expr = replaceVariables(expr, vars, arrays);
         expr = removeSpaces(expr);
+        System.out.println(expr);
         String number1 = "";
         String number2 = "";
         while (expr.contains("(")) {
-            String inParenth = expr.substring(expr.indexOf('(') + 1, expr.lastIndexOf(')'));
+            int count = 1;
+            int frontIndex = expr.indexOf("(");
+            int endIndex = 0;
+            for (int i = frontIndex+1; i < expr.length(); i++) {
+                if (expr.charAt(i)=='(')
+                    count++;
+                else if (expr.charAt(i)==')')
+                    count--;
+                if (count == 0) {
+                    endIndex = i;
+                    break;
+                }
+            }
+            String inParenth = expr.substring(frontIndex+1, endIndex);
             float parenth = evaluate(inParenth, vars, arrays);
-            expr = expr.substring(0, expr.indexOf('(')) + parenth + expr.substring(expr.lastIndexOf(')') + 1);
+            expr = expr.substring(0, frontIndex) + parenth + expr.substring(endIndex + 1);
             System.out.println(expr);
         }
         while (expr.contains("[")) {
-            String inArray = expr.substring(expr.indexOf('[') + 1, expr.lastIndexOf(']'));
+            int count = 1;
+            int frontIndex = expr.indexOf("[");
+            int endIndex = 0;
+            for (int i = frontIndex+1; i < expr.length(); i++) {
+                if (expr.charAt(i)=='[')
+                    count++;
+                else if (expr.charAt(i)==']')
+                    count--;
+                if (count == 0) {
+                    endIndex = i;
+                    break;
+                }
+            }
+            String inArray = expr.substring(expr.indexOf('[') + 1, endIndex);
             float arr = evaluate(inArray, vars, arrays);
             System.out.println(arr);
-            expr = expr.substring(0, expr.indexOf('[') + 1) + arr + expr.substring(expr.lastIndexOf(']'));
+            expr = expr.substring(0, expr.indexOf('[') + 1) + arr + expr.substring(endIndex);
             String build = "";
             for (int i = expr.indexOf('[') - 1; i >= 0; i--) {
                 if (delims.contains(expr.charAt(i) + ""))
@@ -212,6 +239,7 @@ public class Expression {
             else
                 expr = remove[0];
             number1 = number2 = "";
+            System.out.println(expr);
         }
         while (expr.contains("/")) {
             int index = expr.indexOf("/");
@@ -246,6 +274,57 @@ public class Expression {
             else
                 expr = remove[0];
             number1 = number2 = "";
+            System.out.println(expr);
+        }
+        while (expr.contains("--")) {
+            int index = expr.indexOf("--");
+            expr = expr.substring(0,index) + "+" + expr.substring(index+2);
+        }
+        while (expr.contains("-")) {
+            boolean subtractFound = false;
+            for (int j = 1; j < expr.length(); j++) {
+                if (expr.charAt(j) == '-') {
+                    if (Character.isDigit(expr.charAt(j - 1)) && (Character.isDigit(expr.charAt(j + 1)) || expr.charAt(j + 1) == '-')) {
+                        subtractFound = true;
+                        int index = j;
+                        for (int i = index - 1; i >= 0; i--) {
+                            if (delims.contains(expr.charAt(i) + "")) {
+                                if (expr.charAt(i) == '-') {
+                                    if (i == 0) {
+                                        number1 = expr.charAt(i) + number1;
+                                        break;
+                                    } else if (Character.isDigit(expr.charAt(i - 1)))
+                                        break;
+                                }
+                                break;
+                            } else {
+                                number1 = expr.charAt(i) + number1;
+                            }
+                        }
+                        for (int i = index + 1; i < expr.length(); i++) {
+                            if (delims.contains(expr.charAt(i) + "")) {
+                                if (expr.charAt(i) == '-' && i == index + 1) {
+                                    number2 = number2 + expr.charAt(i);
+                                } else
+                                    break;
+                            } else {
+                                number2 = number2 + expr.charAt(i);
+                            }
+                        }
+                        if (subtractFound)
+                            break;
+                    }
+                }
+
+            }
+            if (!subtractFound)
+                break;
+            String eq = number1 + "-" + number2;
+
+            expr = expr.replace(eq, (Float.parseFloat(number1) - Float.parseFloat(number2)) + "");
+            number1 = number2 = "";
+            subtractFound = false;
+            System.out.println(expr);
         }
         while (expr.contains("+")) {
             int index = expr.indexOf("+");
@@ -281,54 +360,7 @@ public class Expression {
                 expr = remove[0];
             number1 = number2 = "";
         }
-        while (expr.contains("-")) {
-            int index = expr.indexOf("-");
-            boolean shouldBreak = true;
-            if (index == 0) {
-                for (int i = index + 1; i < expr.length(); i++) {
-                    if (delims.contains(expr.charAt(i) + "")) {
-                        shouldBreak = false;
-                        break;
-                    }
-                }
-                if (shouldBreak)
-                    break;
-            }
-            if (index > 0) {
-                if (!Character.isDigit(expr.charAt(index - 1)))
-                    break;
-            }
-            if (index == 0)
-                index = 1 + expr.substring(1).indexOf('-');
-            for (int i = index - 1; i >= 0; i--) {
-                if (delims.contains(expr.charAt(i) + "")) {
-                    if (expr.charAt(i) == '-') {
-                        if (i == 0) {
-                            number1 = expr.charAt(i) + number1;
-                            break;
-                        } else if (Character.isDigit(expr.charAt(i - 1)))
-                            break;
-                    }
-                    break;
-                } else {
-                    number1 = expr.charAt(i) + number1;
-                }
-            }
-            for (int i = index + 1; i < expr.length(); i++) {
-                if (delims.contains(expr.charAt(i) + "")) {
-                    if (expr.charAt(i) == '-' && i == index + 1) {
-                        number2 = number2 + expr.charAt(i);
-                    } else
-                        break;
-                } else {
-                    number2 = number2 + expr.charAt(i);
-                }
-            }
-            String eq = number1 + "-" + number2;
 
-            expr = expr.replace(eq, (Float.parseFloat(number1) - Float.parseFloat(number2)) + "");
-            number1 = number2 = "";
-        }
         System.out.println(expr);
         result = Float.parseFloat(expr);
         return result;
